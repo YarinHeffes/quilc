@@ -248,7 +248,7 @@
   :components ((:file "coalton-quil")))
 
 (asdf:defsystem "cl-quil/foust"
-  :description "???"
+  :description "Clifford-based global optimizer extension to CL-QUIL."
   :author "Yarin Heffes"
   :license "Apache License 2.0"
   :depends-on ("coalton"
