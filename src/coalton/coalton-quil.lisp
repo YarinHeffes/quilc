@@ -9,6 +9,7 @@
    #:coalton
    #:coalton-prelude)
   (:local-nicknames
+   (#:iter #:coalton-library/iterator)
    (#:tree #:coalton-library/ord-tree)
    (#:map #:coalton-library/ord-map))
   (:export
@@ -39,6 +40,7 @@
    #:get-parsed-program-executable-code
    #:set-parsed-program-executable-code!
    #:map-parsed-program-executable-code!
+   #:get-parsed-program-highest-qubit-index
    #:copy-parsed-program
    #:print-parsed-program
    #:get-parsed-program-final-rewiring
@@ -49,6 +51,7 @@
    #:get-quil-measurement-qubit
    #:get-quil-measure-address
    #:get-quil-measurement-address
+   #:get-quil-instruction-qubits
    #:get-quil-operator-description
    #:get-quil-named-operator-name
    #:get-quil-dagger-operator-operator
@@ -419,6 +422,26 @@ The result will be a `Fraction` in [0,1) which corresponds to revolutions."
        (Some (get-quil-measure-address measure-m)))
       ((QuilMeasureDiscard _)
        None))))
+
+(coalton-toplevel
+
+  (declare get-quil-instruction-qubits (QuilInstruction -> (List UFix)))
+  (define (get-quil-instruction-qubits instruction)
+    "Get a `List` of qubits included in a `QuilInstruction`."
+    (match instruction
+      ((QuilGateApplication gate-application)
+       (get-quil-gate-application-qubits gate-application))
+      ((QuilMeasurement measurement)
+       (singleton (get-quil-measurement-qubit measurement)))
+      (_ Nil)))
+
+  (declare get-parsed-program-highest-qubit-index (QuilParsedProgram -> (Optional UFix)))
+  (define (get-parsed-program-highest-qubit-index pp)
+    "Get the highest qubit index included in `pp`. Returns `None` if `pp` does not contain qubit instructions."
+    (match (get-parsed-program-executable-code pp)
+      ((QuilExecutableCode instructions)
+       (iter:max! (iter:flat-map! (compose iter:into-iter get-quil-instruction-qubits)
+                                  (iter:into-iter instructions)))))))
 
 (coalton-toplevel
 

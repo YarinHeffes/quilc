@@ -468,7 +468,12 @@ compiling the `foust:Circuit` back to a `cl-quil:parsed-program`. Lastly, print 
 
 if `print-progress?`."
     (let ((parsed-program-prime (copy-parsed-program parsed-program))
-          (foust-atlas (quil-parsed-program->foust-atlas parsed-program-prime))
+          (foust-atlas (pipe parsed-program-prime
+                             (map-parsed-program-executable-code!
+                              (nativize-executable-code
+                               (build-nQ-foust-chip
+                                (with-default 0 (map 1+ (get-parsed-program-highest-qubit-index parsed-program))))))
+                             quil-parsed-program->foust-atlas))
           (initial-circuit (circuit-from-atlas add-preparations? foust-atlas))
           (final-circuit (pipe initial-circuit
                                (foust-quil chip-specification preserve-state?)
