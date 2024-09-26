@@ -38,6 +38,7 @@
    #:map-parsed-program-memory-definitions!
    #:get-parsed-program-executable-code
    #:set-parsed-program-executable-code!
+   #:map-parsed-program-executable-code!
    #:copy-parsed-program
    #:print-parsed-program
    #:get-parsed-program-final-rewiring
@@ -58,6 +59,7 @@
    #:make-quil-memory-descriptor
    #:make-quil-memory-ref
    #:compiler-hook
+   #:nativize-executable-code
    #:get-chip-specification-links
    #:build-IBM-Qx5
    #:build-nQ-fully-connected-chip
@@ -331,8 +333,8 @@ Must be in {cl-quil:named-operator, cl-quil:dagger-operator}.")))))))
       (cl:progn (cl:setf (cl-quil:parsed-program-memory-definitions pp) ds)
                 pp)))
 
-  (declare map-parsed-program-memory-definitions!
-           (((List QuilMemoryDescriptor) -> (List QuilMemoryDescriptor)) -> QuilParsedProgram -> QuilParsedProgram))
+  (declare map-parsed-program-memory-definitions! (((List QuilMemoryDescriptor) -> (List QuilMemoryDescriptor))
+                                                   -> QuilParsedProgram -> QuilParsedProgram))
   (define (map-parsed-program-memory-definitions! f pp)
     "Map the memory definitions of `pp` over `f`."
     (pipe (f (get-parsed-program-memory-definitions pp))
@@ -352,7 +354,14 @@ Must be in {cl-quil:named-operator, cl-quil:dagger-operator}.")))))))
       (lisp QuilParsedProgram (pp cl-executable-code-c)
         (cl:progn (cl:setf (cl-quil:parsed-program-executable-code pp)
                            cl-executable-code-c)
-                  pp)))))
+                  pp))))
+
+  (declare map-parsed-program-executable-code! ((QuilExecutableCode -> QuilExecutableCode)
+                                                -> QuilParsedProgram -> QuilParsedProgram))
+  (define (map-parsed-program-executable-code! f pp)
+    "Map the `QuilExecutableCode` of `pp` over `f`."
+    (pipe (f (get-parsed-program-executable-code pp))
+          (flip set-parsed-program-executable-code! pp))))
 
 (coalton-toplevel
 
@@ -519,7 +528,19 @@ Must be in {cl-quil:named-operator, cl-quil:dagger-operator}.")))))
         (cl:multiple-value-bind (cpp swaps duration)
             (cl-quil:compiler-hook parsed-program chip-specification
                                    :protoquil protoquil? :destructive destructive?)
-          (Tuple3 cpp swaps duration))))))
+          (Tuple3 cpp swaps duration)))))
+
+  (declare nativize-executable-code (QuilChipSpecification -> QuilExecutableCode -> QuilExecutableCode))
+  (define (nativize-executable-code chip-specification executable-code)
+    "Compile `executable-code` to the restrictions of `chip-specification` without applying optimizations."
+    (let ((cl-executable-code (as ClQuilExecutableCode executable-code)))
+      (as QuilExecutableCode
+       (lisp ClQuilExecutableCode (chip-specification cl-executable-code)
+         (cl:coerce
+          (cl-quil::expand-to-native-instructions
+           (cl:coerce cl-executable-code 'cl:list)
+           chip-specification)
+          'cl:simple-vector))))))
 
 (coalton-toplevel
 
