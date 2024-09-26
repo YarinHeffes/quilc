@@ -322,7 +322,7 @@ a mapping from variable IDs to dense memory addresses."
           (True
            (if (== pauli-operator-two foust:Y) 4 2)))
         (match wrapped-link-map
-          ((Some link-map) (+ (into (* 3 (1- (dag-distance link-map index-one index-two))))))
+          ((Some link-map) (+ (into (* 2 (1- (dag-distance link-map index-one index-two))))))
           ((None) id))))
       (_ (error "Can only compute cost for TQE gates."))))
 
@@ -362,9 +362,9 @@ False if the interaction can be conjugated to a CZ with single-qubit Cliffords."
              ((== pauli-operator-one foust:Z)
               (singleton (foust:Controlled pauli-operator-two index-one index-two)))
              ((== pauli-operator-two foust:X)
-              (make-list (foust:H foust:Plus foust:Y index-one)
+              (make-list (foust:R foust:Y (foust:Angle -1/4) index-one)
                          (foust:Controlled foust:X index-one index-two)
-                         (foust:H foust:Plus foust:Y index-one)))
+                         (foust:R foust:Y (foust:Angle 1/4) index-one)))
              (True
               (singleton (foust:Controlled foust:X index-two index-one))))))
       ((foust:S p index-q)
