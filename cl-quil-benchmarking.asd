@@ -24,7 +24,8 @@
                "cl-quil/coalton"
                "cl-quil/foust"
                "bordeaux-threads"
-               "trivial-garbage")
+               "trivial-garbage"
+               "qvm")
   :author "Yarin Heffes"
   :description "A benchmark for Foust."
   :license "Apache License 2.0"
