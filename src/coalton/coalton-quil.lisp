@@ -61,8 +61,7 @@
    #:get-chip-specification-links
    #:build-IBM-Qx5
    #:build-nQ-fully-connected-chip
-   #:parse-gate-information
-   #:build-nQ-fully-connected-chip2
+   #:build-nQ-foust-chip
    #:get-quil-rewiring-l2p
    #:get-quil-rewiring-p2l))
 
@@ -556,50 +555,71 @@ Must be in {cl-quil:named-operator, cl-quil:dagger-operator}.")))))
 
   (declare build-nQ-fully-connected-chip (UFix -> (List String) -> QuilChipSpecification))
   (define (build-nQ-fully-connected-chip n architecture)
-    "Construct a `QuilChipSpecification` for a chip with fully connected qubits with the architecture specified."
+    "Construct a `QuilChipSpecification` for a chip with fully connected qubits with the architecture specified.
+
+Example usage:
+
+    (build-nQ-fully-connected-chip 5 (make-list \":CZ\" \":CNOT\"))"
     (lisp QuilChipSpecification (n architecture)
       (cl-quil::build-nQ-fully-connected-chip
        n
-       :architecture (cl:map 'cl:list #'cl:read-from-string architecture))))
+       :architecture (cl:map 'cl:list #'cl:read-from-string architecture)))))
 
-  (declare parse-gate-information ((List (Tuple3 String (List String) (List String))) -> QuilGateInformation))
-  (define (parse-gate-information gates)
-    "Parse `QuilGateInformation` given in the form (Tuple3 operator (List parameter) (List argument)).
+(cl:defun make-gate-field (operator cl:&key parameters arguments qubit target)
+  (cl:let ((gate-hash (cl:make-hash-table :test #'cl:equalp)))
+    (cl:setf (cl:gethash "operator" gate-hash) operator)
+    (cl:cond
+      (arguments
+       (cl:progn
+         (cl:setf (cl:gethash "parameters" gate-hash) parameters)
+         (cl:setf (cl:gethash "arguments" gate-hash) arguments)))
+      (qubit
+       (cl:progn
+         (cl:setf (cl:gethash "qubit" gate-hash) qubit)
+         (cl:if target (cl:setf (cl:gethash "target" gate-hash) target))))
+      (cl:t (cl:error "make-gate-field missing arguments or qubit field.")))
+    gate-hash))
 
-E.g., (Tuple3 \"RZ\" (singleton \"_\") (singleton \"_\"))."
-    (let ((gates-field
-            (map (fn ((Tuple3 operator parameters arguments))
-                   (lisp :gates-entry (operator parameters arguments)
-                     (cl:let ((gate-hash (cl:make-hash-table :test #'cl:equalp)))
-                       (cl:setf (cl:gethash "operator" gate-hash) operator)
-                       (cl:setf (cl:gethash "parameters" gate-hash) parameters)
-                       (cl:setf (cl:gethash "arguments" gate-hash) arguments)
-                       gate-hash)))
-                 gates)))
-      (lisp QuilGateInformation (gates-field)
-        (cl-quil::parse-gates-field gates-field))))
+(coalton-toplevel
 
-  (declare build-nQ-fully-connected-chip2 (UFix -> QuilGateInformation -> (List String) -> QuilChipSpecification))
-  (define (build-nQ-fully-connected-chip2 n gate-information architecture)
-    "Construct a `QuilChipSpecification` for a chip with fully connected qubits with the single-qubit gates
-
-and the architecture specified."
-    (lisp QuilChipSpecification (n gate-information architecture)
-      ;; The following block of code is adapted directly from the original implementation
-      ;; of cl-quil::build-nQ-fully-connected-chip in the file /quilc/src/chip/chip-specification.lisp.
-      (cl:let ((architecture (cl:map 'cl:list #'cl:read-from-string  architecture))
-               (chip-spec
-                 (cl-quil::make-chip-specification :generic-rewriting-rules (cl:coerce (cl-quil::global-rewriting-rules) 'cl:vector))))
-        (cl-quil::install-generic-compilers chip-spec architecture)
-        ;; prep the qubits
-        (cl:loop :for q :below n
-           :do (cl-quil::adjoin-hardware-object (cl-quil::build-qubit q :gate-information gate-information) chip-spec))
-        ;; prep the links
-        (cl:dotimes (i n)
-          (cl:dotimes (j i)
-            (cl-quil::install-link-onto-chip chip-spec j i :architecture architecture)))
+  (declare build-nQ-foust-chip (UFix -> QuilChipSpecification))
+  (define (build-nQ-foust-chip number-of-qubits)
+    "Construct a `QuilChipSpecification` to compile instructions to the gate set supported by Foust."
+    (lisp QuilChipSpecification (number-of-qubits)
+      (cl:let ((chip-spec (cl-quil::make-chip-specification
+                           :generic-rewriting-rules (cl:coerce (cl-quil::global-rewriting-rules) 'cl:vector)))
+               (single-qubit-gate-information (cl-quil::parse-gates-field
+                                               (cl:list
+                                                (make-gate-field "X" :arguments (cl:list "_"))
+                                                (make-gate-field "Y" :arguments (cl:list "_"))
+                                                (make-gate-field "Z" :arguments (cl:list "_"))
+                                                (make-gate-field "H" :arguments (cl:list "_"))
+                                                (make-gate-field "S" :arguments (cl:list "_"))
+                                                (make-gate-field "T" :arguments (cl:list "_"))
+                                                (make-gate-field "RX" :parameters (cl:list "_") :arguments (cl:list "_"))
+                                                (make-gate-field "RY" :parameters (cl:list "_") :arguments (cl:list "_"))
+                                                (make-gate-field "RZ" :parameters (cl:list "_") :arguments (cl:list "_"))
+                                                (make-gate-field "MEASURE" :qubit "_")
+                                                (make-gate-field "MEASURE" :qubit "_" :target "_"))))
+               (two-qubit-gate-information (cl-quil::parse-gates-field
+                                            (cl:list
+                                             (make-gate-field "CNOT" :arguments (cl:list "_" "_"))
+                                             (make-gate-field "CZ" :arguments (cl:list "_" "_"))
+                                             (make-gate-field "ISWAP" :arguments (cl:list "_" "_"))
+                                             (make-gate-field "SWAP" :arguments (cl:list "_" "_"))))))
+        (cl-quil::install-generic-compilers chip-spec '(:cnot :cz :iswap :swap))
+        (cl:dotimes (q number-of-qubits)
+          (cl-quil::adjoin-hardware-object (cl-quil::build-qubit q :gate-information single-qubit-gate-information) chip-spec))
+        (cl:dotimes (q-two number-of-qubits)
+          (cl:dotimes (q-one q-two)
+            (cl:let ((link (cl-quil::build-link q-one q-two :gate-information two-qubit-gate-information))
+                     (link-index (cl-quil::chip-spec-n-links chip-spec)))
+              (cl-quil::adjoin-hardware-object link chip-spec)
+              (cl:vector-push-extend link-index (cl-quil::vnth 1 (cl-quil::hardware-object-cxns
+                                                                  (cl-quil::chip-spec-nth-qubit chip-spec q-one))))
+              (cl:vector-push-extend link-index (cl-quil::vnth 1 (cl-quil::hardware-object-cxns
+                                                                  (cl-quil::chip-spec-nth-qubit chip-spec q-two)))))))
         (cl-quil::warm-hardware-objects chip-spec)))))
-
 
 (coalton-toplevel
 
