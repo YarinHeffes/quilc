@@ -286,7 +286,7 @@ Must be in {cl-quil:named-operator, cl-quil:dagger-operator}.")))))))
     (lisp QuilParsedProgram (quil-string)
       (cl-quil:parse-quil quil-string)))
 
-  (declare parse-file (coalton-library/file:Pathname -> QuilParsedProgram))
+  (declare parse-file ((Into :a coalton-library/file:Pathname) => :a -> QuilParsedProgram))
   (define (parse-file file)
     "Parse a file, such as a `.qasm` file, to a `QuilParsedProgram`."
     (let ((file-string (unwrap (coalton-library/file:read-file-to-string file))))
