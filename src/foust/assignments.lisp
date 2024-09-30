@@ -1,5 +1,3 @@
-;;;; assignments.lisp
-;;;;
 ;;;; Author: Yarin Heffes
 
 (defpackage #:cl-quil.foust/assignments

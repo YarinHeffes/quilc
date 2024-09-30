@@ -1,5 +1,3 @@
-;;;; pauli.lisp
-;;;;
 ;;;; Author: Yarin Heffes
 
 (defpackage #:cl-quil.foust/pauli

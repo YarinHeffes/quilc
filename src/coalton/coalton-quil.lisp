@@ -1,5 +1,3 @@
-;;;; coalton-quil.lisp
-;;;;
 ;;;; Author: Yarin Heffes
 
 (defpackage #:coalton-quil

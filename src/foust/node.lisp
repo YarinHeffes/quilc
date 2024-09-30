@@ -1,5 +1,3 @@
-;;;; node.lisp
-;;;;
 ;;;; Author: Yarin Heffes
 
 (defpackage #:cl-quil.foust/node

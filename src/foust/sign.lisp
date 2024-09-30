@@ -1,5 +1,3 @@
-;;;; sign.lisp
-;;;;
 ;;;; Author: Yarin Heffes
 
 (defpackage #:cl-quil.foust/sign

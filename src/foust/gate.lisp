@@ -1,5 +1,3 @@
-;;;; gate.lisp
-;;;;
 ;;;; Author: Yarin Heffes
 
 (defpackage #:cl-quil.foust/gate

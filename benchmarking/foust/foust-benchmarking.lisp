@@ -1,5 +1,3 @@
-;;;; foust-benchmarking.lisp
-;;;;
 ;;;; Author: Yarin Heffes
 
 (defpackage #:cl-quil-benchmarking.foust
