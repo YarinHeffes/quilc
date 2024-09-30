@@ -1,8 +1,7 @@
-;;;; graphviz.lisp
-;;;;
 ;;;; Author: Yarin Heffes
 
 (defpackage #:cl-quil.foust/graphviz
+  (:documentation "This package supports visualization of Foust Graphs via the `dot` command.")
   (:use
    #:coalton
    #:coalton-prelude)
@@ -19,12 +18,9 @@
 
 (named-readtables:in-readtable coalton:coalton)
 
-;; This package supports visualization of Foust Graphs via the `dot`
-;; command.
-
 (coalton-toplevel
 
-  ;; Consider adding to Standard Library.
+  ;; These functions are awaiting merging into Coalton standard library.
 
   (declare mconcat! ((Monoid :a) => (Iterator :a) -> :a))
   (define (mconcat! iter)

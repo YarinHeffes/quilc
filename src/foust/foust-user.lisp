@@ -1,8 +1,9 @@
-;;;; foust-user.lisp
-;;;;
 ;;;; Author: Yarin Heffes
 
 (defpackage #:cl-quil.foust-user
+  (:documentation "This package defines functions and variables for a user to experiment with Foust
+
+and Fousting in a sandbox-like environment.")
   (:use
    #:coalton
    #:coalton-prelude)
@@ -12,16 +13,15 @@
   (:import-from
    #:cl-quil.foust
    #:releasing-foust
-   #:preserving-foust)
+   #:preserving-foust
+   #:foust)
   (:local-nicknames
+   (#:foust #:cl-quil.foust)
    (#:gate #:cl-quil.foust/gate)))
 
 (in-package #:cl-quil.foust-user)
 
 (named-readtables:in-readtable coalton:coalton)
-
-;; This package defines functions and variables for a user to
-;; experiment with Foust and Fousting in a sandbox-like environment.
 
 (coalton-toplevel
 
