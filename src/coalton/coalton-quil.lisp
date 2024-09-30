@@ -526,7 +526,7 @@ Must be in {cl-quil:named-operator, cl-quil:dagger-operator}.")))))
   (define (make-quil-classical-move address bit)
     "Make a `QuilClassicalMove` from the supplied parameters."
     (lisp QuilClassicalMove (address bit)
-      (cl:make-instance 'cl-quil:classical-move
+      (cl:make-instance 'cl-quil:classical-move-bit/immediate
                         :left address
                         :right (cl-quil:constant bit cl-quil:quil-bit))))
 
@@ -534,7 +534,7 @@ Must be in {cl-quil:named-operator, cl-quil:dagger-operator}.")))))
   (define (make-quil-classical-exclusive-or left-address right-address)
     "Make a `QuilClassicalExclusiveOr` from the supplied parameters."
     (lisp QuilClassicalExclusiveOr (left-address right-address)
-      (cl:make-instance 'cl-quil:classical-exclusive-or
+      (cl:make-instance 'cl-quil:classical-exclusive-or-bit/bit
                         :left left-address
                         :right right-address)))
 
