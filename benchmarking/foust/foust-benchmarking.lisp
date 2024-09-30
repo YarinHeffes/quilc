@@ -34,19 +34,7 @@
   (declare qasm-test-files (Unit -> (List file:Pathname)))
   (define (qasm-test-files)
     "A list of pathnames associated with the QASM benchmarking files."
-    (filter (compose (string:substring? ".qasm") into) (unwrap (file:directory-files qasm-prefix))))
-
-  (declare parsed-program-multi-qubit-depth (QuilParsedProgram -> UFix))
-  (define (parsed-program-multi-qubit-depth parsed-program-p)
-    "The number of gates applied to two or more qubits in a parsed program."
-    (match (get-parsed-program-executable-code parsed-program-p)
-      ((QuilExecutableCode instructions)
-       (list:countby (fn (instruction)
-                       (match instruction
-                         ((QuilGateApplication gate-application-g)
-                          (<= 2 (length (get-quil-gate-application-qubits gate-application-g))))
-                         (_ False)))
-                     instructions)))))
+    (filter (compose (string:substring? ".qasm") into) (unwrap (file:directory-files qasm-prefix)))))
 
 (coalton-toplevel
 

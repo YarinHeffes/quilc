@@ -8,6 +8,7 @@
    #:coalton-prelude)
   (:local-nicknames
    (#:iter #:coalton-library/iterator)
+   (#:list #:coalton-library/list)
    (#:tree #:coalton-library/ord-tree)
    (#:map #:coalton-library/ord-map))
   (:export
@@ -38,6 +39,7 @@
    #:get-parsed-program-executable-code
    #:set-parsed-program-executable-code!
    #:map-parsed-program-executable-code!
+   #:parsed-program-multi-qubit-depth
    #:get-parsed-program-highest-qubit-index
    #:copy-parsed-program
    #:print-parsed-program
@@ -371,6 +373,18 @@ Must be in {cl-quil:named-operator, cl-quil:dagger-operator}.")))))))
     "Get the `List` of qubits to which `gate-application-g` applies."
     (lisp (List UFix) (gate-application-g)
       (cl:map 'cl:list 'cl-quil:qubit-index (cl-quil:application-arguments gate-application-g))))
+
+  (declare parsed-program-multi-qubit-depth (QuilParsedProgram -> UFix))
+  (define (parsed-program-multi-qubit-depth parsed-program-p)
+    "The number of gates applied to two or more qubits in a parsed program."
+    (match (get-parsed-program-executable-code parsed-program-p)
+      ((QuilExecutableCode instructions)
+       (list:countby (fn (instruction)
+                       (match instruction
+                         ((QuilGateApplication gate-application-g)
+                          (<= 2 (length (get-quil-gate-application-qubits gate-application-g))))
+                         (_ False)))
+                     instructions))))
 
   (declare get-quil-gate-application-angle (QuilGateApplication -> Fraction))
   (define (get-quil-gate-application-angle gate-application-g)
