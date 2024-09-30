@@ -310,18 +310,10 @@ a mapping from variable IDs to dense memory addresses."
   (define (basic-quil-costs wrapped-link-map gate-g)
     "Map a `TQE` gate to an `IFIX` reflecting the cost to implement the gate."
     (match gate-g
-      ((foust:TQE pauli-operator-one pauli-operator-two index-one index-two _)
-       (pipe
-        (cond
-          ((== pauli-operator-one foust:Z)
-           (if (== pauli-operator-two foust:Y) 2 0))
-          ((== pauli-operator-one foust:X)
-           (if (== pauli-operator-two foust:Z) 0 2))
-          (True
-           (if (== pauli-operator-two foust:Y) 4 2)))
-        (match wrapped-link-map
-          ((Some link-map) (+ (into (* 2 (1- (dag-distance link-map index-one index-two))))))
-          ((None) id))))
+      ((foust:TQE _ _ index-one index-two _)
+       (match wrapped-link-map
+         ((Some link-map) (into (* 2 (1- (dag-distance link-map index-one index-two)))))
+         ((None) 0)))
       (_ (error "Can only compute cost for TQE gates."))))
 
   (declare basic-quil-then-swap?? (UFix -> UFix -> Boolean))
