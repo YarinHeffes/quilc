@@ -25,7 +25,7 @@ To run the tests, execute:
 Foust will express every gate that is not a single- or two-qubit Clifford gate in terms of one or two Hermitian Paulis. Here, the term Hermitian Pauli refers to any unitary of the form
 
 ```math
- \mathbf{P}=\pm P_{n-1}\otimes P_{n-2}\cdots\otimes P_2\otimes P_1\otimes P_0,
+ \mathbf{P}=\pm P_0\otimes P_1\otimes P_2\cdots\otimes P_{n-1},
  ```
 
  where $`P_i\in\{I,X,Y,Z\}`$ and $`n`$ describes the number of qubits spanned by the relevant Hilbert space. More concretely, the Hermitian Paulis make up the subgroup of the Pauli group whose elements have a phase of $`\pm 1`$.
