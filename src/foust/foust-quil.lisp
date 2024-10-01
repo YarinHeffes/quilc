@@ -235,17 +235,7 @@ a mapping from variable IDs to dense memory addresses."
           ((== pauli-operator-p foust:Y)
            (make-quil-gate-application False "RY" (singleton (foust:angle->radians theta)) (singleton qubit)))
           ((== pauli-operator-p foust:Z)
-           (cond
-             ((== theta (foust:Angle 1/4))
-              (make-quil-gate-application False "S" Nil (singleton qubit)))
-             ((== theta (foust:Angle 3/4))
-              (make-quil-gate-application True "S" Nil (singleton qubit)))
-             ((== theta (foust:Angle 1/8))
-              (make-quil-gate-application False "T" Nil (singleton qubit)))
-             ((== theta (foust:Angle 7/8))
-              (make-quil-gate-application True "T" Nil (singleton qubit)))
-             (True
-              (make-quil-gate-application False "RZ" (singleton (foust:angle->radians theta)) (singleton qubit)))))
+           (make-quil-gate-application False "RZ" (singleton (foust:angle->radians theta)) (singleton qubit)))
           (True (error "Unexpected `PauliOperator` in `R` gate.")))))
       (_ (error (mconcat (make-list "Foust `Gate` " (into gate-g) " cannot be converted to a QuilInstruction.")))))))
 
