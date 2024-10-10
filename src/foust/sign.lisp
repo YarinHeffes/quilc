@@ -55,12 +55,6 @@
 
 Only the `Char`s #\\+ and #\\- can be represented as `Sign`s.")))))))
 
-  (define-instance (Into Sign Char)
-    (define (into sign-s)
-      (match sign-s
-        ((Plus) #\+)
-        ((Minus) #\-))))
-
   (define-instance (Into Sign String)
     (define (into sign-s)
       (match sign-s

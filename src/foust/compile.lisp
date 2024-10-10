@@ -128,7 +128,7 @@ including the compilation of `Frame`s into single-qubit Clifford `Gate`s and `TQ
                                 (Tuple c (map-graph-assignments
                                           (flip add-instruction (Tuple v (classical-bit-flip (ClassicalVariable v))))
                                           g))
-                                (Tuple node-index (MeasurementNode (Measurement (pauli-* p (make-pauli-i Minus)) v))))
+                                (Tuple node-index (MeasurementNode (Measurement (pauli-phase-flip p) v))))
              (correct-and-add-gate (node->gate n))))
         (_ (correct-and-add-gate (node->gate n))))))
 

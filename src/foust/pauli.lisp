@@ -42,6 +42,7 @@ key <-> value pairs,  and a `Sign` to indicate a phase of +1 or -1.")
    #:make-pauli-i
    #:make-pauli-one
    #:make-pauli-two
+   #:pauli-phase-flip
    #:pauli-*))
 
 (in-package #:cl-quil.foust/pauli)
@@ -130,6 +131,11 @@ with the `Sign` and `PauliOperator`s from the given `Pauli`."
     (Pauli sign (make-list (Tuple qubit-one operator-one) (Tuple qubit-two operator-two)))))
 
 (coalton-toplevel
+
+  (declare pauli-phase-flip (Pauli -> Pauli))
+  (define (pauli-phase-flip (%Pauli sign operator-map))
+    "Flip the phase of a `Pauli`."
+    (%Pauli (sign-* Minus sign) operator-map))
 
   (declare pauli-product-phase (Pauli -> Pauli -> IFix))
   (define (pauli-product-phase p q)

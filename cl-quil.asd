@@ -242,7 +242,9 @@
   :author "Yarin Heffes"
   :license "Apache License 2.0"
   :depends-on ("cl-quil"
-               "coalton")
+               "coalton"
+               "bordeaux-threads"
+               "trivial-garbage")
   :pathname "src/coalton"
   :serial t
   :components ((:file "coalton-quil")))

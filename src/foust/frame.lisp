@@ -128,7 +128,7 @@ and Zi and Xi represent the Pauli operators Z and X acting on the qubit i."
 
   (declare frame<- (Frame -> Pauli -> Pauli))
   (define (frame<- f p)
-    "Push a `Frame` upstream and, conjugating a `Pauli`. If F represents U, then (U)(P) -> [(U)P(U+)](U)."
+    "Push a `Frame` upstream, conjugating a `Pauli`. If F represents U, then (U)(P) -> [(U)P(U+)](U)."
     (pipe
      (iter:fold! (fn ((Tuple p-prime q) (Tuple row-index (Tuple stabilizer-z destabilizer-x)))
                    (match (bimap (complement (commute? p-prime))

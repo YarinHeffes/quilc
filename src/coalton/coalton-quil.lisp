@@ -33,6 +33,7 @@
    #:QuilRewiring
    #:parse-quil
    #:parse-file
+   #:parse-qasm
    #:get-parsed-program-memory-definitions
    #:set-parsed-program-memory-definitions!
    #:map-parsed-program-memory-definitions!
@@ -63,6 +64,7 @@
    #:make-quil-memory-ref
    #:compiler-hook
    #:nativize-executable-code
+   #:parsed-program-metrics
    #:get-chip-specification-links
    #:build-IBM-Qx5
    #:build-nQ-fully-connected-chip
@@ -291,7 +293,13 @@ Must be in {cl-quil:named-operator, cl-quil:dagger-operator}.")))))))
     "Parse a file, such as a `.qasm` file, to a `QuilParsedProgram`."
     (let ((file-string (unwrap (coalton-library/file:read-file-to-string file))))
       (lisp QuilParsedProgram (file file-string)
-        (cl-quil:parse file-string :originating-file file)))))
+        (cl-quil:parse file-string :originating-file file))))
+
+  (declare parse-qasm (String -> QuilParsedProgram))
+  (define (parse-qasm qasm-string)
+    "Parse a QASM string to a `QuilParsedProgram`."
+    (lisp QuilParsedProgram (qasm-string)
+      (cl-quil.qasm:parse-qasm qasm-string))))
 
 (coalton-toplevel
 
@@ -576,6 +584,42 @@ Must be in {cl-quil:named-operator, cl-quil:dagger-operator}.")))))
            (cl:coerce cl-executable-code 'cl:list)
            chip-specification)
           'cl:simple-vector))))))
+
+;; This macro is copied directly from
+;; quilc/benchmarking/rewiring-analysis.lisp
+;; written by Robert Smith.
+(cl:defmacro with-stopwatch (elapsed-var cl:&body body)
+  (cl:let ((start-time (cl:gensym)))
+    `(cl:let ((,start-time (cl:get-internal-real-time)))
+       (cl:symbol-macrolet ((,elapsed-var (cl:- (cl:get-internal-real-time) ,start-time)))
+         ,@body))))
+
+;; The code in the following block is adapted from
+;; the function benchmark-qasm-suite in the file
+;; quilc/benchmarking/qasm-benchmarking.lisp
+;; for use with Foust in Coalton.
+(coalton-toplevel
+
+  (declare parsed-program-metrics (UFix -> QuilChipSpecification -> (QuilParsedProgram -> QuilParsedProgram) -> QuilParsedProgram
+                                        -> (Optional (Tuple3 Double-Float UFix UFix))))
+  (define (parsed-program-metrics timeout chip pre-operation parsed-program)
+    "Compile `parsed-program` to `chip` and return the elapsed time (s), number of topological swaps, and multi-qubit depth."
+    (lisp (Optional (Tuple3 Double-Float UFix UFix)) (timeout chip pre-operation parsed-program)
+      (trivial-garbage:gc :full cl:t)
+      (cl:handler-case
+          (bordeaux-threads:with-timeout (timeout)
+            (with-stopwatch elapsed-time
+              (coalton
+               (match (compiler-hook ((lisp (QuilParsedProgram -> QuilParsedProgram) () pre-operation)
+                                      (lisp QuilParsedProgram () parsed-program))
+                                     (lisp QuilChipSpecification () chip)
+                                     False
+                                     False)
+                 ((Tuple3 compiled-parsed-program swaps _)
+                  (Some (Tuple3 (lisp Double-Float () (cl:coerce (cl:/ elapsed-time 1000000) 'cl:double-float))
+                                swaps
+                                (parsed-program-multi-qubit-depth compiled-parsed-program))))))))
+        (bordeaux-threads:timeout () None)))))
 
 (coalton-toplevel
 

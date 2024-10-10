@@ -69,14 +69,14 @@ the gates in a circuit prior to conversion into `foust:Circuit`."
                 (1+ next-fresh-index)))
 
   (declare circuit-from-atlas (Boolean -> FoustAtlas -> foust:Circuit))
-  (define (circuit-from-atlas add-preparations? (FoustAtlas gs qubits  _ _))
-    "Make a `foust:Circuit` from a `FoustAtlas`, preparing all qubits in |0⟩ if `add-preparations?`."
-    (foust:make-circuit (iter:fold! (flip Cons)
-                                    (reverse gs)
-                                    (if add-preparations?
-                                        (map (foust:Prep foust:Plus foust:Z foust:X)
-                                             (tree:decreasing-order qubits))
-                                        iter:Empty)))))
+  (define (circuit-from-atlas add-measurements? (FoustAtlas gs qubits  _ _))
+    "Make a `foust:Circuit` from a `FoustAtlas`, measuring all qubits if `add-measurements?`."
+    (foust:make-circuit (reverse (iter:fold! (flip Cons)
+                                             gs
+                                             (if add-measurements?
+                                                 (map (fn (q) (foust:Meas foust:Plus foust:Z q q))
+                                                      (tree:decreasing-order qubits))
+                                                 iter:Empty))))))
 
 (coalton-toplevel
 
@@ -95,58 +95,46 @@ the gates in a circuit prior to conversion into `foust:Circuit`."
         foust-atlas
         (match (get-quil-operator-description gate-application-g)
           ((QuilNamedOperator named-operator-o)
-           (let ((name (get-quil-named-operator-name named-operator-o)))
+           (let ((name (get-quil-named-operator-name named-operator-o))
+                 (qubits (get-quil-gate-application-qubits gate-application-g)))
              (cond
                ((== name "X")
-                (foust:PauliGate foust:X (list:nth 0 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:PauliGate foust:X (list:nth 0 qubits)))
                ((== name "Y")
-                (foust:PauliGate foust:Y (list:nth 0 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:PauliGate foust:Y (list:nth 0 qubits)))
                ((== name "Z")
-                (foust:PauliGate foust:Z (list:nth 0 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:PauliGate foust:Z (list:nth 0 qubits)))
                ((== name "H")
-                (foust:H foust:Plus foust:Y (list:nth 0 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:H foust:Plus foust:Y (list:nth 0 qubits)))
                ((== name "S")
-                (foust:S foust:Z (list:nth 0 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:S foust:Z (list:nth 0 qubits)))
                ((== name "CNOT")
-                (foust:Controlled foust:X
-                                  (list:nth 0 (get-quil-gate-application-qubits gate-application-g))
-                                  (list:nth 1 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:Controlled foust:X (list:nth 0 qubits) (list:nth 1 qubits)))
                ((== name "CZ")
-                (foust:Controlled foust:Z
-                                  (list:nth 0 (get-quil-gate-application-qubits gate-application-g))
-                                  (list:nth 1 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:Controlled foust:Z (list:nth 0 qubits) (list:nth 1 qubits)))
                ((== name "ISWAP")
-                (foust:iSwap (list:nth 0 (get-quil-gate-application-qubits gate-application-g))
-                             (list:nth 1 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:iSwap (list:nth 0 qubits) (list:nth 1 qubits)))
                ((== name "SWAP")
-                (foust:Swap (list:nth 0 (get-quil-gate-application-qubits gate-application-g))
-                            (list:nth 1 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:Swap (list:nth 0 qubits) (list:nth 1 qubits)))
                ((== name "RX")
-                (foust:R foust:X
-                         (foust:Angle (get-quil-gate-application-angle gate-application-g))
-                         (list:nth 0 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:R foust:X (foust:Angle (get-quil-gate-application-angle gate-application-g)) (list:nth 0 qubits)))
                ((== name "RY")
-                (foust:R foust:Y
-                         (foust:Angle (get-quil-gate-application-angle gate-application-g))
-                         (list:nth 0 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:R foust:Y (foust:Angle (get-quil-gate-application-angle gate-application-g)) (list:nth 0 qubits)))
                ((== name "RZ")
-                (foust:R foust:Z
-                         (foust:Angle (get-quil-gate-application-angle gate-application-g))
-                         (list:nth 0 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:R foust:Z (foust:Angle (get-quil-gate-application-angle gate-application-g)) (list:nth 0 qubits)))
                ((== name "T")
-                (foust:R foust:Z
-                         (foust:Angle 1/8)
-                         (list:nth 0 (get-quil-gate-application-qubits gate-application-g))))
+                (foust:R foust:Z (foust:Angle 1/8) (list:nth 0 qubits)))
                (True (error (mconcat (make-list "Gate " name " not supported.")))))))
           ((QuilDaggerOperator dagger-operator-o)
            (match (get-quil-dagger-operator-operator dagger-operator-o)
              ((QuilNamedOperator named-operator-o)
-              (let ((name (get-quil-named-operator-name named-operator-o)))
+              (let ((name (get-quil-named-operator-name named-operator-o))
+                    (qubits (get-quil-gate-application-qubits gate-application-g)))
                 (cond
                   ((== name "S")
-                   (foust:SDag foust:Z (list:nth 0 (get-quil-gate-application-qubits gate-application-g))))
+                   (foust:SDag foust:Z (list:nth 0 qubits)))
                   ((== name "T")
-                   (foust:R foust:Z (foust:Angle -1/8) (list:nth 0 (get-quil-gate-application-qubits gate-application-g))))
+                   (foust:R foust:Z (foust:Angle -1/8) (list:nth 0 qubits)))
                   (True (error (mconcat (make-list "Gate DAGGER " name " not supported.")))))))
              (_ (error "Operand of `dagger-operator` must be `named-operator`.")))))))
       (_ (error "Instruction not supported.")))))
@@ -254,10 +242,9 @@ a mapping from variable IDs to dense memory addresses."
       ((foust:Prep sign-s p _ qubit)
        (Tuple (singleton (foust:Prep foust:Plus foust:Z foust:X qubit))
               (cond
-                ((== p foust:X)
-                 (foust:frame-from-s (== sign-s foust:Plus) foust:Y qubit))
-                ((== p foust:Y)
-                 (foust:frame-from-s (== sign-s foust:Minus) foust:X qubit))
+                ((== p foust:X) (foust:frame-from-s (== sign-s foust:Plus) foust:Y qubit))
+                ((== p foust:Y) (foust:frame-from-s (== sign-s foust:Minus) foust:X qubit))
+                ((== sign-s foust:Minus) (foust:frame-from-pauli-gate foust:X qubit))
                 (True (default)))))
       ((foust:Meas sign-s p qubit classical-variable-c)
        (if (and (== sign-s foust:Plus)
@@ -302,7 +289,7 @@ a mapping from variable IDs to dense memory addresses."
     (match gate-g
       ((foust:TQE _ _ index-one index-two _)
        (match wrapped-link-map
-         ((Some link-map) (into (* 2 (1- (dag-distance link-map index-one index-two)))))
+         ((Some link-map) (into (* 3 (1- (dag-distance link-map index-one index-two)))))
          ((None) 0)))
       (_ (error "Can only compute cost for TQE gates."))))
 
@@ -325,19 +312,13 @@ False if the interaction can be conjugated to a CZ with single-qubit Cliffords."
            (cond
              ((== pauli-operator-one foust:Y)
               (concat (make-list (singleton (foust:R foust:X (foust:Angle 1/4) index-one))
-                                 (basic-quil-replacements (foust:TQE foust:Z
-                                                                     pauli-operator-two
-                                                                     index-one
-                                                                     index-two
-                                                                     then-swap?))
+                                 (basic-quil-replacements
+                                  (foust:TQE foust:Z pauli-operator-two index-one index-two then-swap?))
                                  (singleton (foust:R foust:X (foust:Angle -1/4) index-one)))))
              ((== pauli-operator-two foust:Y)
               (concat (make-list (singleton (foust:R foust:X (foust:Angle 1/4) index-two))
-                                 (basic-quil-replacements (foust:TQE pauli-operator-one
-                                                                     foust:Z
-                                                                     index-one
-                                                                     index-two
-                                                                     then-swap?))
+                                 (basic-quil-replacements
+                                  (foust:TQE pauli-operator-one foust:Z index-one index-two then-swap?))
                                  (singleton (foust:R foust:X (foust:Angle -1/4) index-two)))))
              ((== pauli-operator-one foust:Z)
               (singleton (foust:Controlled pauli-operator-two index-one index-two)))
@@ -348,19 +329,12 @@ False if the interaction can be conjugated to a CZ with single-qubit Cliffords."
              (True
               (singleton (foust:Controlled foust:X index-two index-one))))))
       ((foust:S p index-q)
-       (if (== p foust:Z)
-           (singleton gate-g)
-           (singleton (foust:R p (foust:Angle 1/4) index-q))))
+       (singleton (foust:R p (foust:Angle 1/4) index-q)))
       ((foust:SDag p index-q)
-       (if (== p foust:Z)
-           (singleton gate-g)
-           (singleton (foust:R p (foust:Angle -1/4) index-q))))
+       (singleton (foust:R p (foust:Angle -1/4) index-q)))
       ((foust:H sign-s p index-q)
-       (if (and (== sign-s foust:Plus)
-                (== p foust:Y))
-           (singleton gate-g)
-           (make-list (foust:PauliGate (foust:next-pauli-operator p) index-q)
-                      (foust:R p (foust:Angle (if (== sign-s foust:Plus) 1/4 -1/4)) index-q))))
+       (make-list (foust:PauliGate (foust:next-pauli-operator p) index-q)
+                  (foust:R p (foust:Angle (if (== sign-s foust:Plus) 1/4 -1/4)) index-q)))
       ((foust:Permute sign-x sign-y sign-z index-q)
        (pipe (make-list (foust:R foust:X (foust:Angle (if (== sign-x foust:Plus) -1/4 1/4)) index-q)
                         (foust:R foust:Y (foust:Angle (if (== sign-y foust:Plus) -1/4 1/4)) index-q))
@@ -439,10 +413,10 @@ the basic corrections, costs, and TQE spec functions."
       (foust:foust preserve-state? basic-quil-corrections (basic-quil-costs link-map) basic-quil-then-swap??)))
 
   (declare foust-parsed-program (QuilParsedProgram -> (Optional QuilChipSpecification) -> Boolean -> Boolean -> QuilParsedProgram))
-  (define (foust-parsed-program parsed-program chip-specification preserve-state? add-preparations?)
-    "Foust a parsed program by compiling it to a `foust:Circuit, adding initial preparations if
+  (define (foust-parsed-program parsed-program chip-specification preserve-state? add-measurements?)
+    "Foust a parsed program by compiling it to a `foust:Circuit, measuring all qubits if
 
-`add-preparations` then fousting the `foust:Circuit` according to `preserve-state?` and then
+`add-measurements?` then fousting the `foust:Circuit` according to `preserve-state?` and then
 
 compiling the `foust:Circuit` back to a `cl-quil:parsed-program`. Lastly, print all four stages
 
@@ -454,7 +428,7 @@ if `print-progress?`."
                                (build-nQ-foust-chip
                                 (with-default 0 (map 1+ (get-parsed-program-highest-qubit-index parsed-program))))))
                              quil-parsed-program->foust-atlas))
-          (initial-circuit (circuit-from-atlas add-preparations? foust-atlas))
+          (initial-circuit (circuit-from-atlas add-measurements? foust-atlas))
           (final-circuit (pipe initial-circuit
                                (foust-quil chip-specification preserve-state?)
                                remove-entry-preparations
@@ -471,9 +445,9 @@ if `print-progress?`."
                        (build-executable-code final-circuit foustro-map foust-atlas)))))
              parsed-program-prime))))
 
-(cl:defun cl-foust-parsed-program (parsed-program cl:&key chip-specification (preserve-state-p cl:t) (add-preparations-p cl:nil))
+(cl:defun cl-foust-parsed-program (parsed-program cl:&key chip-specification (preserve-state-p cl:t) (add-measurements-p cl:nil))
   (coalton (foust-parsed-program (lisp QuilParsedProgram () parsed-program)
                                  (lisp (Optional QuilChipSpecification) ()
                                    (cl:if chip-specification (Some chip-specification) None))
                                  (lisp Boolean () preserve-state-p)
-                                 (lisp Boolean () add-preparations-p))))
+                                 (lisp Boolean () add-measurements-p))))

@@ -22,10 +22,7 @@
 (asdf:defsystem "cl-quil-benchmarking/foust"
   :depends-on ("coalton"
                "cl-quil/coalton"
-               "cl-quil/foust"
-               "bordeaux-threads"
-               "trivial-garbage"
-               "qvm")
+               "cl-quil/foust")
   :author "Yarin Heffes"
   :description "A benchmark for Foust."
   :license "Apache License 2.0"

@@ -67,9 +67,6 @@ any change to the repository.")
   (is (== Plus (unwrap (tryinto #\+))))
   (is (== Minus (unwrap (tryinto #\-))))
 
-  (is (== #\+ (into Plus)))
-  (is (== #\- (into Minus)))
-
   (is (== "+" (into Plus)))
   (is (== "-" (into Minus))))
 
