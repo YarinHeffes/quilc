@@ -105,7 +105,8 @@ Very simply, all free elements are processed, and then the cheapest element rema
 To run benchmarks, execute the following commands (assuming all dependencies have been installed):
 
 ``` lisp
-(asdf:load-system "cl-quil-benchmarking/foust")
+(push :coalton-release *features*)
+(asdf:load-system "cl-quil-benchmarking/foust" :force t)
 (cl-quil-benchmarking.foust:cl-foust-benchmark-qasm-suite)
 ```
 
